@@ -114,7 +114,16 @@ def getIntersects(A, B, rewind):
     B.pos += B.v * rewind
     B.angle += B.angularV * rewind
 
-    #TODO: finish this bitch. check where they're intersecting. 
+    #check bounding boxes
+    #check edge intersection (if done correctly, won't have to check if vertices are equal)
+    """
+    if boundsIntersect(A, B):
+        for a_edge in A.edges:
+            for b_edge in B.edges:
+                edgeIntersect = getEdgeIntersect(a_edge, b_edge) #1 unique soln
+                if edgeIntersect != None: return edgeIntersect
+    return None
+    """
 
 def getNorm(intersects, facing):
     tangent = intersects[1] - intersects[0]
