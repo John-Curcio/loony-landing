@@ -65,6 +65,7 @@ class Flyer(object):
             pygame.draw.circle(background, (255, 255, 255), (int(self.pos[0]), int(self.pos[1])), self.r)
         else:
             pygame.draw.polygon(surface,color,lmap(lambda l: lmap(int, l),self.vertices),int(round(width)))
+            #pygame.draw.polygon(surface, color, pointlist)
             #alternatively, could draw every line. 
 
     def move(self, deltaTime):
