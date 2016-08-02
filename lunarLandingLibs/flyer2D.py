@@ -4,6 +4,12 @@ import pygame
 import math
 
 
+class Edge(object):
+    def __init__(self, a, b):
+        self.slope = (a[1] - b[1]) / (a[0] - b[0])
+        self.xIntercept = b[1] - self.slope * b[0]
+        self.endpoints = [a, b]
+
 class Flyer(object):
     #Flyer is a class that captures all the general, foundational information
     #required to do calculations involving rigid bodies. 
@@ -15,16 +21,32 @@ class Flyer(object):
     #shape, it can rotate and collide at angles and shit like that.
     
     #tbh idk why i named it "Flyer." Maybe it sounds friendlier than RB?
-    def __init__(self, x, y, mass): #TODO: a Flyer's shape should be discretized as a set of vertices. makes collision detection easier
+    def __init__(self, x, y, mass, vertices=None): 
+    #TODO: a Flyer's shape should be discretized as a set of vertices. makes collision detection easier
         self.pos = np.array([x, y])
         self.mass = mass
 
         self.angle = 0
-        self.angularV = 0
-        
+        self.angularV = 0        
         self.v = np.array([0, 0])
-        self.r = 10
+
+
+        if vertices == None: 
+            self.r = 10
+            self.edges = None
+        else: 
+            self.edges = []
+            self.r = np.linalg.norm(self.pos - np.array(vertices[i]))
+            for i in range(1, len(vertices)):
+                self.edges.append(Edge(vertices[i], vertices[i - 1])) 
+                # ^ this assumes that edges are ordered clockwise or ccwise - gotta be convex!
+                #TODO: should have a way around this...
+                self.r = max(np.linalg.norm(self.pos - np.array(vertices[i])), self.r)
+            self.r = int(round(self.r))
+
+
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
+        self.momentOfInertia = None #TODO: how to calculate for polygons? and need a better variable name
 
 
     def applyForce(self, force, deltaTime):
@@ -39,7 +61,11 @@ class Flyer(object):
 
     def draw(self, background):
         background.blit(self.Surface, (int(self.pos[0]) - self.r, int(self.pos[1]) - self.r))
-        pygame.draw.circle(background, (255, 255, 255), (int(self.pos[0]), int(self.pos[1])), self.r)
+        if(self.vertices == None):
+            pygame.draw.circle(background, (255, 255, 255), (int(self.pos[0]), int(self.pos[1])), self.r)
+        else:
+            pygame.draw.polygon(surface,color,lmap(lambda l: lmap(int, l),self.vertices),int(round(width)))
+            #alternatively, could draw every line. 
 
     def move(self, deltaTime):
         self.pos[0] += self.v[0] * deltaTime
@@ -107,23 +133,42 @@ def puckCollide(A, B, deltaTime): #should i make deltaTime a global?
         A.applyForce(FBonA, deltaTime)
         B.applyForce(FAonB, deltaTime)
 
-def getIntersects(A, B, rewind): 
-    #TODO: Honestly not really a todo, but I think this is going to be troublesome with numpy's precision. Bug waiting to occur
-    A.pos += A.v * rewind 
-    A.angle += A.angularV * rewind
-    B.pos += B.v * rewind
-    B.angle += B.angularV * rewind
+def boundsIntersect(A, B):
+    #TODO: use pygame bounding boxes for speed
+    return np.linalg.norm(A.pos - B.pos) > A.r + B.r #yes, strictly greater than
 
-    #check bounding boxes
-    #check edge intersection (if done correctly, won't have to check if vertices are equal)
-    """
-    if boundsIntersect(A, B):
-        for a_edge in A.edges:
-            for b_edge in B.edges:
-                edgeIntersect = getEdgeIntersect(a_edge, b_edge) #1 unique soln
-                if edgeIntersect != None: return edgeIntersect
+def getEdgeIntersect(a, b): 
+    
+    x = (b.xIntercept - a.xIntercept) / (a.slope - b.slope)
+    y = a.slope * x + a.xIntercept
+    #make sure it's btw both pairs of endpoints!
+    if (x <= max(a.endpoints[0][0], a.endpoints[1][0]) and 
+        x >= min(a.endpoints[0][0], a.endpoints[1][0]) and
+        y <= max(b.endpoints[0][1], b.endpoints[1][1]) and 
+        y >= min(b.endpoints[0][1], b.endpoints[1][1])):
+        return (x, y)
     return None
-    """
+
+def rewindPosAndAng(A, deltaTime):
+    A.pos += A.v * deltaTime
+    A.angle += A.angularV * deltaTime
+
+def getIntersects(A, B, deltaTime): 
+    #TODO: think this is going to be troublesome with numpy's precision. Bug waiting to occur
+
+    rewindPosAndAng(A, deltaTime)
+    rewindPosAndAng(B, deltaTime) #DO NOT UNDO THIS BEFORE RETURNING. 
+    #TODO: this isn't very clear, but i think this saves a lil time... refactor getNorm and getIntersects for clarity
+
+    if boundsIntersect(A, B):
+        intersects []
+        for edgeA in A.edges:
+            for edgeB in B.edges:
+                edgeIntersect = getEdgeIntersect(edgeA, edgeB)
+                if edgeIntersect != None: intersects.append(edgeIntersect)
+                if len(intersects) == 2: 
+                    return intersects
+    return None
 
 def getNorm(intersects, facing):
     tangent = intersects[1] - intersects[0]
