@@ -7,7 +7,7 @@ from pygame.locals import *
 #import sys
 
 #custom modules
-import lunarLandingLibs.flyer2D as f
+from lunarLandingLibs import flyer2D as f
 
 ################################################################################
 

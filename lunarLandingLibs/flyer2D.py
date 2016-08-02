@@ -1,7 +1,13 @@
 import numpy as np 
-import vectorAlgebra as va
 import pygame
 import math
+
+import os
+if os.getcwd() == 'C:\\Users\\Nardo\\Documents\\GitHub\\loony-landing\\lunarLandingLibs':
+    import vectorAlgebra as va
+else:
+    import lunarLandingLibs.vectorAlgebra as va 
+    #I FUCKING HATE THIS SO MUCH.
 
 
 class Edge(object):
@@ -30,7 +36,7 @@ class Flyer(object):
         self.angularV = 0        
         self.v = np.array([0, 0])
 
-
+        self.vertices = vertices
         if vertices == None: 
             self.r = 10
             self.edges = None
@@ -65,7 +71,7 @@ class Flyer(object):
             pygame.draw.circle(background, (255, 255, 255), (int(self.pos[0]), int(self.pos[1])), self.r)
         else:
             pygame.draw.polygon(surface,color,lmap(lambda l: lmap(int, l),self.vertices),int(round(width)))
-            #pygame.draw.polygon(surface, color, pointlist)
+            #pygame.draw.polygon(surface, color, pointlist, line_thickness(optional)) 
             #alternatively, could draw every line. 
 
     def move(self, deltaTime):
@@ -162,7 +168,7 @@ def getIntersects(A, B, deltaTime):
     #TODO: this isn't very clear, but i think this saves a lil time... refactor getNorm and getIntersects for clarity
 
     if boundsIntersect(A, B):
-        intersects []
+        intersects = []
         for edgeA in A.edges:
             for edgeB in B.edges:
                 edgeIntersect = getEdgeIntersect(edgeA, edgeB)
