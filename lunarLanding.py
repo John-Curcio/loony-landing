@@ -39,13 +39,17 @@ def main():
     
     mainloop = True
 
-    Player = f.TestPlayer(width/2, height/2, 1)
-    Player.Surface.set_colorkey((0, 0, 0)) #black is transparent.
-    Player.Surface = Player.Surface.convert_alpha()
+    sideLen = 25
+    vertices = [(width/2 + sideLen/2, height/2 + sideLen/2),
+            (width/2 + sideLen/2, height/2 - sideLen/2),
+            (width/2 - sideLen/2, height/2 + sideLen/2),
+            (width/2 - sideLen/2, height/2 - sideLen/2)]
+    Player = f.TestPlayer(width/2, height/2, 1, vertices)
+    #for Edge in Player.edges: Edge.Surface.convert_alpha()
 
-    Collider = f.Flyer(width/3, height/3, 5)
-    Collider.Surface.set_colorkey((0, 0, 0))
-    Collider.Surface = Collider.Surface.convert_alpha()
+    # Collider = f.Flyer(width/3, height/3, 5)
+    # Collider.Surface.set_colorkey((0, 0, 0))
+    # Collider.Surface = Collider.Surface.convert_alpha()
 
     while mainloop:
 
@@ -72,14 +76,14 @@ def main():
                 if event.key == pygame.K_RIGHT:
                     Player.applyForce([100, 0], deltaTime)
    
-        f.puckCollide(Player, Collider, deltaTime)
+        # f.puckCollide(Player, Collider, deltaTime)
         #f.genCollide(Player, Collider, deltaTime)
         Player.move(deltaTime)
-        Collider.move(deltaTime)
+        # Collider.move(deltaTime)
 
-        screen.blit(background, (0, 0))
+        screen.blit(background, (0, 0)) #TODO: Don't think i fully understand what this does.
         Player.draw(screen)
-        Collider.draw(screen)
+        # Collider.draw(screen)
         #TODO: wtf is get_rect?
         pygame.display.set_caption("Frame rate: {:0.2f} frames per second." 
                                    " Playtime: {:.2} seconds".format(
