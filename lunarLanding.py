@@ -40,17 +40,22 @@ def main():
     mainloop = True
 
     sideLen = 25
-    vertices = [(width/2 + sideLen/2, height/2 + sideLen/2),
-            (width/2 + sideLen/2, height/2 - sideLen/2),
-            (width/2 - sideLen/2, height/2 + sideLen/2),
-            (width/2 - sideLen/2, height/2 - sideLen/2)]
+    vertices = [[width/2 + sideLen/2, height/2 + sideLen/2],
+            [width/2 - sideLen/2, height/2 + sideLen/2],
+            [width/2 - sideLen/2, height/2 - sideLen/2],
+            [width/2 + sideLen/2, height/2 - sideLen/2]]
+
     Player = f.TestPlayer(width/2, height/2, 1, vertices)
-    #for Edge in Player.edges: Edge.Surface.convert_alpha()
+    #Player = f.TestPlayer(width/2, height/2, 1, None)
 
     # Collider = f.Flyer(width/3, height/3, 5)
     # Collider.Surface.set_colorkey((0, 0, 0))
     # Collider.Surface = Collider.Surface.convert_alpha()
 
+    arrowsToDirs = {pygame.K_DOWN:[0,1], 
+                    pygame.K_UP:[0,-1], 
+                    pygame.K_LEFT:[-1,0], 
+                    pygame.K_RIGHT:[1,0]}
     while mainloop:
 
         milliseconds = clock.tick(FPS)
@@ -60,28 +65,24 @@ def main():
         #^ clock.tick() returns number of milliseconds passed since last frame
         #FPS is otional. passing it causes a delay so that you dont go faster than FPS in your game
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT: 
-                mainloop = False # pygame window closed by user
-            elif event.type == pygame.KEYDOWN:
-                print(deltaTime)
-                if event.key == pygame.K_ESCAPE:
-                    mainloop = False # user pressed ESC
-                if event.key == pygame.K_DOWN:
-                    Player.applyForce([0, 100], deltaTime)
-                if event.key == pygame.K_UP:
-                    Player.applyForce([0, -100], deltaTime)
-                if event.key == pygame.K_LEFT:
-                    Player.applyForce([-100, 0], deltaTime)
-                if event.key == pygame.K_RIGHT:
-                    Player.applyForce([100, 0], deltaTime)
+        pygame.event.get()
+        #     if event.type == pygame.K_ESCAPE or event.type==pygame.QUIT: 
+        #         mainloop = False # pygame window closed by user
+
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_ESCAPE]: mainloop = False
+        for arrow in arrowsToDirs.keys():
+            if pressed[arrow]:
+                # print(deltaTime)
+                force = [ arrowsToDirs[arrow][i] * 100 for i in range(2)]
+                Player.applyForce(force, deltaTime)
    
-        # f.puckCollide(Player, Collider, deltaTime)
+        #f.puckCollide(Player, Collider, deltaTime)
         #f.genCollide(Player, Collider, deltaTime)
         Player.move(deltaTime)
         # Collider.move(deltaTime)
 
-        screen.blit(background, (0, 0)) #TODO: Don't think i fully understand what this does.
+        screen.blit(background, (0, 0)) 
         Player.draw(screen)
         # Collider.draw(screen)
         #TODO: wtf is get_rect?

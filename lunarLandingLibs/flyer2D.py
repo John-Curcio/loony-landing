@@ -17,9 +17,6 @@ class Edge(object):
         else: self.slope = (a[1] - b[1]) / (a[0] - b[0]) 
         self.xIntercept = b[1] - self.slope * b[0]
         self.endpoints = [a, b]
-        self.Surface = pygame.Surface((abs(a[0] - b[0]), abs(a[1] - b[1])))
-        self.Surface.convert_alpha()
-        self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
 
     def draw(self, background):
         #pygame.draw.polygon(background, color, pointlist, line_thickness(optional)) 
@@ -40,7 +37,6 @@ class Flyer(object):
     def __init__(self, x, y, mass, vertices=None): 
         self.pos = np.array([x, y])
         self.mass = mass
-
         self.angle = 0
         self.angularV = 0        
         self.v = np.array([0, 0])
@@ -57,36 +53,35 @@ class Flyer(object):
                 # ^ this assumes that edges are ordered clockwise or ccwise - gotta be convex!
                 #TODO: should have a way to make sure they're ordered
                 self.r = max(np.linalg.norm(self.pos - np.array(vertices[i])), self.r)
-            self.r = int(round(self.r))
-
+            self.r = round(self.r)
 
         self.momentOfInertia = None #TODO: how to calculate for polygons? and need a better variable name
-
+        self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
+        self.Surface.convert_alpha()
+        self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
 
     def applyForce(self, force, deltaTime):
         #print("v was", self.v, end="")
-        self.v[0] += force[0] * deltaTime / self.mass
-        self.v[1] += force[1] * deltaTime / self.mass
+        for i in range(2): self.v[i] += force[i] * deltaTime / self.mass
         #print(" adding", (force[0] * deltaTime / self.mass, force[1] * deltaTime / self.mass), " and now v is", self.v)
 
     def applyImpulse(self, impulse):
-        self.v[0] += impulse[0] / self.mass
-        self.v[1] += impulse[1] / self.mass
+        for i in range(2): self.v[i] += impulse[i] / self.mass
 
     def draw(self, background):
         background.blit(self.Surface, (int(self.pos[0]) - self.r, int(self.pos[1]) - self.r))
         if(self.vertices == None):
-            pygame.draw.circle(background, (255, 255, 255), (int(self.pos[0]), int(self.pos[1])), self.r)
+            pygame.draw.circle(background, (255, 255, 255), (int(round(self.pos[0])), int(round(self.pos[1]))), self.r)
         else:
-            for Edge in self.edges:
-                Edge.draw(background)
-            # pygame.draw.polygon(background,(255, 255, 255),lmap(lambda l: lmap(int, l),self.vertices),int(round(width)))
-            #pygame.draw.polygon(surface, color, pointlist, line_thickness(optional)) 
-            #alternatively, could draw every line. 
+            getIntPointList = lambda a: [(round(a[i][0]), round(a[i][1])) for i in range(len(a))]
+            pygame.draw.polygon(background,(255, 255, 255), getIntPointList(self.vertices))
 
     def move(self, deltaTime):
-        self.pos[0] += self.v[0] * deltaTime
-        self.pos[1] += self.v[1] * deltaTime
+
+        updatedPos = lambda a, v, dt: [a[i] + v[i] * dt for i in range(2)]
+
+        self.pos = updatedPos(self.pos, self.v, deltaTime)
+        self.vertices = [updatedPos(vert, self.v, deltaTime) for vert in self.vertices]
 
 class SpaceshipComponent(Flyer): 
     #TODO: need to break this up into engines, capsules, rockets, struts?, etc
