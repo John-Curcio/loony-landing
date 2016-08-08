@@ -7,21 +7,8 @@ if os.getcwd() == 'C:\\Users\\Nardo\\Documents\\GitHub\\loony-landing\\lunarLand
     import vectorAlgebra as va
 else:
     import lunarLandingLibs.vectorAlgebra as va 
-    #I FUCKING HATE THIS SO MUCH.
+    # ^ this feels very hack-y and unprofessional but it gets the job done.
 
-
-class Edge(object):
-    def __init__(self, a, b):
-        # V TODO: can't rely on slope anymore i guess? maybe store slope as tuple (numerator, denominator). save some precision too!
-        if a[0] == b[0]: self.slope = 0 
-        else: self.slope = (a[1] - b[1]) / (a[0] - b[0]) 
-        self.xIntercept = b[1] - self.slope * b[0]
-        self.endpoints = [a, b]
-
-    def draw(self, background):
-        #pygame.draw.polygon(background, color, pointlist, line_thickness(optional)) 
-        getUsableEndpoint = lambda a: (round(a[0]), round(a[1]))
-        pygame.draw.line(background, (255, 0, 0), getUsableEndpoint(self.endpoints[0]), getUsableEndpoint(self.endpoints[1]), 3)
 
 class Flyer(object):
     #Flyer is a class that captures all the general, foundational information
@@ -31,7 +18,7 @@ class Flyer(object):
     #doesn't bend or break. It's a good approximation of, say, a wrench, and a
     #bad approximation of a water balloon. Unlike a particle (think a point with 
     #mass and position and velocity and nothing else), since it has size and 
-    #shape, it can rotate and collide at angles and shit like that.
+    #shape, it can rotate and collide at angles.
     
     #tbh idk why i named it "Flyer." Maybe it sounds friendlier than RB?
     def __init__(self, x, y, mass, vertices=None): 
@@ -42,23 +29,32 @@ class Flyer(object):
         self.v = np.array([0, 0])
 
         self.vertices = vertices
+
         if vertices == None: 
             self.r = 10
-            self.edges = None
-        else: 
-            self.edges = []
-            self.r = np.linalg.norm(self.pos - np.array(vertices[0]))
+        else:
+            self.r = 0
             for i in range(0, len(vertices)):
-                self.edges.append(Edge(vertices[i], vertices[i - 1])) 
-                # ^ this assumes that edges are ordered clockwise or ccwise - gotta be convex!
-                #TODO: should have a way to make sure they're ordered
                 self.r = max(np.linalg.norm(self.pos - np.array(vertices[i])), self.r)
-            self.r = round(self.r)
-
         self.momentOfInertia = None #TODO: how to calculate for polygons? and need a better variable name
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
         self.Surface.convert_alpha()
         self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
+        self.color = (255, 255, 255)
+
+    def __repr__(self):
+        return str(self.vertices)
+
+    def getEdges(self): 
+        #TODO: THIS ASSUMES VERTICES ARE ALREADY SORTED C-WISE OR CC-WISE! 
+        #Either need to ensure thats always true or make sure this sorts edges accordingly
+        # V this'll result in a div by 0 error
+        # getAngle = lambda center, point: math.arctan((point[1] - center[1]) / (point[0] - center[0])) 
+        # self.vertices.sort(key=getAngle)
+        edges = [] 
+        for i in range(len(self.vertices)):
+            edges.append([self.vertices[i - 1], self.vertices[i]])
+        return edges
 
     def applyForce(self, force, deltaTime):
         #print("v was", self.v, end="")
@@ -71,10 +67,10 @@ class Flyer(object):
     def draw(self, background):
         background.blit(self.Surface, (int(self.pos[0]) - self.r, int(self.pos[1]) - self.r))
         if(self.vertices == None):
-            pygame.draw.circle(background, (255, 255, 255), (int(round(self.pos[0])), int(round(self.pos[1]))), self.r)
+            pygame.draw.circle(background, self.color, (int(round(self.pos[0])), int(round(self.pos[1]))), self.r)
         else:
             getIntPointList = lambda a: [(round(a[i][0]), round(a[i][1])) for i in range(len(a))]
-            pygame.draw.polygon(background,(255, 255, 255), getIntPointList(self.vertices))
+            pygame.draw.polygon(background,self.color, getIntPointList(self.vertices))
 
     def move(self, deltaTime):
 
@@ -129,19 +125,43 @@ def puckCollide(A, B, deltaTime): #should i make deltaTime a global?
 
 def boundsIntersect(A, B):
     #TODO: use pygame bounding boxes for sake of speed
-    return np.linalg.norm(A.pos - B.pos) > A.r + B.r #yes, strictly greater than
+    return np.linalg.norm(A.pos - B.pos) < A.r + B.r #yes, strictly less than
 
-def getEdgeIntersect(a, b): 
-    
-    x = (b.xIntercept - a.xIntercept) / (a.slope - b.slope)
-    y = a.slope * x + a.xIntercept
-    #make sure it's btw both pairs of endpoints!
-    if (x <= max(a.endpoints[0][0], a.endpoints[1][0]) and 
-        x >= min(a.endpoints[0][0], a.endpoints[1][0]) and
-        y <= max(b.endpoints[0][1], b.endpoints[1][1]) and 
-        y >= min(b.endpoints[0][1], b.endpoints[1][1])):
+def getYIntercept(edge):
+    slope = getSlope(edge)
+    if slope == None: return edge[0][1]
+    else: return edge[0][1] - slope * edge[0][0]
+
+def getSlope(edge):
+    if edge[1][0] == edge[0][0]: return None
+    else: return (edge[1][1] - edge[0][1]) / (edge[1][0] - edge[0][0])
+
+def getEdgeIntersect(a, b):
+    slopeA, slopeB = getSlope(a), getSlope(b)
+    if slopeA == slopeB:
+        return None
+    elif None in (slopeA, slopeB): 
+        if slopeA == None:
+            verticalEdge, realEdge = a, b
+            verticalSlope, realSlope = slopeA, slopeB
+        else: 
+            verticalEdge, realEdge = b, a
+            verticalSlope, realSlope = slopeB, slopeA
+        if realSlope == 0: 
+            x = verticalEdge[0][0]
+        else: 
+            x = (getYIntercept(verticalEdge)- getYIntercept(realEdge)) / realSlope
+        y = getYIntercept(verticalEdge)
+    else:
+        x = (getYIntercept(b) - getYIntercept(a)) / (slopeA - slopeB)
+        y = slopeA * x + getYIntercept(a)
+    btw = lambda x, a, b: min(a, b) <= x <= max(a, b)
+
+    if (btw(x, a[0][0], a[1][0]) and
+        btw(y, a[0][1], a[1][1]) and
+        btw(x, b[0][0], b[1][0]) and
+        btw(y, b[0][1], b[1][1])):
         return (x, y)
-    return None
 
 def rewindPosAndAng(A, deltaTime):
     A.pos += A.v * deltaTime
@@ -153,14 +173,13 @@ def getIntersects(A, B, deltaTime):
     rewindPosAndAng(A, deltaTime)
     rewindPosAndAng(B, deltaTime) #DO NOT UNDO THIS BEFORE RETURNING. 
     #TODO: this isn't very clear, but i think this saves a lil time... refactor getNorm and getIntersects for clarity
-
     if boundsIntersect(A, B):
         intersects = []
-        for edgeA in A.edges:
-            for edgeB in B.edges:
+        for edgeA in A.getEdges():
+            for edgeB in B.getEdges():
                 edgeIntersect = getEdgeIntersect(edgeA, edgeB)
                 if edgeIntersect != None: intersects.append(edgeIntersect)
-                if len(intersects) == 2: 
+                if len(intersects) == 2:
                     return intersects
     return None
 
@@ -196,6 +215,11 @@ def genCollide(A, B, deltaTime):
     #TODO: apply the crazy formula to A
     n = -n
     #now apply to B
+
+def testCollide(A, B, deltaTime):
+    intersects = getIntersects(A, B, 0)
+    if intersects != None:
+        return intersects
 
 def getSysKE(A, B):
     return 0.5 * (A.mass * np.linalg.norm(A.v)**2) + 0.5 * (B.mass * np.linalg.norm(B.v)**2)
