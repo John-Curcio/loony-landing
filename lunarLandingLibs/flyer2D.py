@@ -128,15 +128,14 @@ def boundsIntersect(A, B):
     return np.linalg.norm(A.pos - B.pos) < A.r + B.r #yes, strictly less than
 
 def getYIntercept(edge):
-    slope = getSlope(edge)
-    if slope == None: return edge[0][1]
-    else: return edge[0][1] - slope * edge[0][0]
+    return edge[0][1] - getSlope(edge) * edge[0][0]
 
 def getSlope(edge):
     if edge[1][0] == edge[0][0]: return None
     else: return (edge[1][1] - edge[0][1]) / (edge[1][0] - edge[0][0])
 
 def getEdgeIntersect(a, b):
+    #edge is represented as a 2-length list of [x, y] coordinates
     slopeA, slopeB = getSlope(a), getSlope(b)
     if slopeA == slopeB:
         return None
@@ -147,11 +146,9 @@ def getEdgeIntersect(a, b):
         else: 
             verticalEdge, realEdge = b, a
             verticalSlope, realSlope = slopeB, slopeA
-        if realSlope == 0: 
-            x = verticalEdge[0][0]
-        else: 
-            x = (getYIntercept(verticalEdge)- getYIntercept(realEdge)) / realSlope
-        y = getYIntercept(verticalEdge)
+        x = verticalEdge[0][0]
+        assert(x == verticalEdge[1][0])
+        y = realSlope * x + getYIntercept(realEdge)
     else:
         x = (getYIntercept(b) - getYIntercept(a)) / (slopeA - slopeB)
         y = slopeA * x + getYIntercept(a)

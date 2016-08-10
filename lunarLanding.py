@@ -17,7 +17,7 @@ pygame.init()
 ################################################################################
 #set up the window
 
-size = width, height = 500, 500
+size = width, height = 700, 700
 screen = pygame.display.set_mode(size) #set size of game window
 background = pygame.Surface(screen.get_size()) #create empty surface
 background.fill((0, 100, 230)) #fill surface with some color
@@ -62,7 +62,7 @@ def main():
     #         [width/2 - sideLen/2, height/2 - sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 50, 3)
+    vertices = getVertices(width/2, height/2, 50, 6)
     Player = f.TestPlayer(width/2, height/2, 1, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
