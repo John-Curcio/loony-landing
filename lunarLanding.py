@@ -62,12 +62,12 @@ def main():
     #         [width/2 - sideLen/2, height/2 - sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 50, 6)
+    vertices = getVertices(width/2, height/2, 50, 12)
     Player = f.TestPlayer(width/2, height/2, 1, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
     vertices = getVertices(width/3, height/3, 50, 4)
-    Collider = f.Flyer(width/3, height/3, 5, vertices)
+    Collider = f.Flyer(width/3, height/3, 5, None)
     Collider.Surface.set_colorkey((0, 0, 0))
     Collider.Surface = Collider.Surface.convert_alpha()
 
@@ -113,8 +113,8 @@ def main():
         screen.blit(background, (0, 0)) 
         Player.draw(screen)
         Collider.draw(screen)
-        drawEdges(Collider, screen)
-        drawEdges(Player, screen)
+        # drawEdges(Collider, screen)
+        # drawEdges(Player, screen)
         if tangent != None:
             pygame.draw.line(screen, (255, 0, 0), tangent[0], tangent[1], 2)
         #TODO: wtf is get_rect?

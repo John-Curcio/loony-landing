@@ -28,15 +28,16 @@ class Flyer(object):
         self.angularV = 0        
         self.v = np.array([0, 0])
 
-        self.vertices = vertices
-
         if vertices == None: 
-            self.r = 10
+            self.vertices = None
+            self.r = 50
         else:
+            self.vertices = [None] * len(vertices)
             self.r = 0
             for i in range(0, len(vertices)):
+                self.vertices[i] = np.array(vertices[i])
                 self.r = max(np.linalg.norm(self.pos - np.array(vertices[i])), self.r)
-        self.momentOfInertia = None #TODO: how to calculate for polygons? and need a better variable name
+        self.momentOfInertia = self.getMomentOfInertia()
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
         self.Surface.convert_alpha()
         self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
@@ -44,6 +45,20 @@ class Flyer(object):
 
     def __repr__(self):
         return str(self.vertices)
+
+    def getMomentOfInertia(self):
+        if self.vertices == None: 
+            return math.pi * (self.r**4) / 2  # TODO: try this with a circle and then with an idk 17-gon, see how close their moi's are.
+        j = 0
+        def segmentMoment(a, b):
+            foo = (a[0] * b[1] - a[1] * b[0]) / 12
+            momentAboutX = foo * (a[1]**2 + a[1] * b[1] + b[1]**2)
+            momentAboutY = foo * (a[0]**2 + a[0] * b[0] + b[0]**2)
+            return momentAboutX + momentAboutY
+
+        for i in range(len(self.vertices)):
+            j += segmentMoment(self.vertices[i - 1] - self.pos, self.vertices[i] - self.pos)
+        return abs(j)
 
     def getEdges(self): 
         #TODO: THIS ASSUMES VERTICES ARE ALREADY SORTED C-WISE OR CC-WISE! 
