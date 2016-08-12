@@ -67,7 +67,7 @@ def main():
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
     vertices = getVertices(width/3, height/3, 50, 4)
-    Collider = f.Flyer(width/3, height/3, 5, None)
+    Collider = f.Flyer(width/3, height/3, 5, vertices)
     Collider.Surface.set_colorkey((0, 0, 0))
     Collider.Surface = Collider.Surface.convert_alpha()
 

@@ -48,7 +48,7 @@ class Flyer(object):
 
     def getMomentOfInertia(self):
         if self.vertices == None: 
-            return math.pi * (self.r**4) / 2  # TODO: try this with a circle and then with an idk 17-gon, see how close their moi's are.
+            return math.pi * (self.r**4) / 2  
         j = 0
         def segmentMoment(a, b):
             foo = (a[0] * b[1] - a[1] * b[0]) / 12
@@ -84,12 +84,14 @@ class Flyer(object):
         if(self.vertices == None):
             pygame.draw.circle(background, self.color, (int(round(self.pos[0])), int(round(self.pos[1]))), self.r)
         else:
-            getIntPointList = lambda a: [(round(a[i][0]), round(a[i][1])) for i in range(len(a))]
+            def getIntPointList(a): 
+                return [(round(a[i][0]), round(a[i][1])) for i in range(len(a))]
             pygame.draw.polygon(background,self.color, getIntPointList(self.vertices))
 
     def move(self, deltaTime):
 
-        updatedPos = lambda a, v, dt: [a[i] + v[i] * dt for i in range(2)]
+        def updatedPos(a, v, dt): 
+            return [a[i] + v[i] * dt for i in range(2)]
 
         self.pos = updatedPos(self.pos, self.v, deltaTime)
         self.vertices = [updatedPos(vert, self.v, deltaTime) for vert in self.vertices]
@@ -167,7 +169,9 @@ def getEdgeIntersect(a, b):
     else:
         x = (getYIntercept(b) - getYIntercept(a)) / (slopeA - slopeB)
         y = slopeA * x + getYIntercept(a)
-    btw = lambda x, a, b: min(a, b) <= x <= max(a, b)
+    
+    def btw(x, a, b): 
+        return min(a, b) <= x <= max(a, b)
 
     if (btw(x, a[0][0], a[1][0]) and
         btw(y, a[0][1], a[1][1]) and
