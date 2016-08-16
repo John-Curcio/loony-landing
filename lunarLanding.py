@@ -50,7 +50,7 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 15 #desired frame rate in frames per second.
+    FPS = 10 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
@@ -62,7 +62,7 @@ def main():
     #         [width/2 - sideLen/2, height/2 - sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 50, 12)
+    vertices = getVertices(width/2, height/2, 50, 3)
     Player = f.TestPlayer(width/2, height/2, 1, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
@@ -77,6 +77,7 @@ def main():
                     pygame.K_UP:[0,-1], 
                     pygame.K_LEFT:[-1,0], 
                     pygame.K_RIGHT:[1,0]}
+    print(Player.vertices)
     while mainloop:
 
         milliseconds = clock.tick(FPS)
@@ -94,7 +95,19 @@ def main():
             if pressed[arrow]:
                 force = [ arrowsToDirs[arrow][i] * 100 for i in range(2)]
                 Player.applyForce(force, deltaTime)
-   
+            if pressed[pygame.K_w]: # need a method for applying torque? 
+                Player.angularV += math.pi / 100
+            elif pressed[pygame.K_s]:
+                Player.angularV -= math.pi / 100
+            if pressed[pygame.K_a]:
+                print("Player.angularV is", Player.angularV)
+                print("Player.pos is", Player.pos)
+                print("Vertices:", Player.vertices)
+                print("\n")
+            if pressed[pygame.K_b]:
+                Player.v *= 0
+                Player.angularV = 0
+            # when i want my ship to rotate, can i use a reaction chain (?) or do i need to use thrusters?
         
         #collisions
         seen = set()
@@ -124,3 +137,6 @@ def main():
         pygame.display.flip()
     pygame.quit()
 main()
+
+# Vertices: [array([ 400.,  350.]), array([ 365.45084972,  397.55282581]), array([ 309.54915028,  379.38926261]), array([ 309.54915028,  320.61073739]), array([ 365.45084972,  302.44717419])]
+# Vertices: [array([ 400.,  350.]), array([ 365.45084972,  397.55282581]), array([ 390.45084972,  379.38926261]), array([ 390.45084972,  320.61073739]), array([ 365.45084972,  302.44717419])]
