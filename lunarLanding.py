@@ -95,7 +95,7 @@ def main():
             if pressed[arrow]:
                 force = [ arrowsToDirs[arrow][i] * 100 for i in range(2)]
                 Player.applyForce(force, deltaTime)
-            if pressed[pygame.K_w]: # need a method for applying torque? 
+            if pressed[pygame.K_w]: # need a method for applying torque...how do legit spaceships do it?
                 Player.angularV += math.pi / 100
             elif pressed[pygame.K_s]:
                 Player.angularV -= math.pi / 100

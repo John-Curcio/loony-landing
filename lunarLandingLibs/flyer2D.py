@@ -202,10 +202,10 @@ def getIntersects(A, B, deltaTime):
     return None
 
 def getNorm(intersects, facing):
-    tangent = intersects[1] - intersects[0]
+    tangent = [intersects[1][i] - intersects[0][i] for i in range(len(intersects))]
     n = np.array([tangent[1], -tangent[0]])
     
-    mid = (intersects[0] + intersects[1])/2
+    mid = [(intersects[0][i] + intersects[1][i])/2 for i in range(len(intersects))]
     n = va.proj(facing.pos - mid, n)
     n /= va.dot(n, n)
 
@@ -217,28 +217,56 @@ def genCollide(A, B, deltaTime):
     hi = deltaTime
     lo = 0
     i = 0
-    timeEdit = 0
-    while(i < 4 or (intersects == None and len(intersects) != 2)): 
-        #TODO: 4 is a magic number. Should make desired iters a function of relative speed or something
-        #iterate as desired, but better have 2 intersect points!
-
-        if intersects == None or len(intersects) != 2: 
+    timeEdit = 0 # positive means move time forward, negative means rewind time.
+    while(i < 4 or intersects == None): 
+        # TODO: 4 is a magic number. Should make desired iters a function of 
+        # relative speed or something
+        # for now, iterate as desired, but better have 2 intersect points!
+        if intersects == None: 
             lo = (lo + hi)/2
             timeEdit = (lo + hi)/2
         else:
             hi = (lo + hi)/2
             timeEdit = -(lo + hi)/2
         intersects = getIntersects(A, B, timeEdit)
-    n = getNorm(intersects)
+
+    n = getNorm(intersects, A)
     #TODO: apply the crazy formula to A
     n = -n
     #now apply to B
 
-
+def getRestitutionCoefficient(A, B):
+    return 1
 
 def testCollide(A, B, deltaTime):
     intersects = getIntersects(A, B, 0)
-    return intersects
+    # applying collision to A
+    if intersects != None:
+        n = getNorm(intersects, A)
+        poc = [(intersects[0][i] + intersects[1][i]) / 2 for i in range(len(intersects))] #tuple comprehension?
+        e = getRestitutionCoefficient(A, B)
+        numer = -1 * (1 + e) * va.dot(A.v, n)
+        rap = [(poc - A.pos)[0], (poc - A.pos)[1], 0]
+        rbp = [(poc - B.pos)[0], (poc - B.pos)[1], 0]
+        N = np.array([n[0], n[1], 0])
+        rapxn = va.cross(rap, N) #horrible style but tears in a bucket
+        rbpxn = va.cross(rbp, N)
+        foo = va.dot(rapxn, rapxn)
+        fee = va.dot(rbpxn, rbpxn)
+        denom = 1/A.mass + 1/B.mass + foo/A.momentOfInertia + fee/B.momentOfInertia
+        j = numer / denom
+        print("j is", j)
+        print("A.v was", A.v, "now it's ", end="")
+        A.v += j * n / A.mass
+        print(A.v)
+        #and I'm completely skipping rotations from collisions until I figure that out
+        n *= -1
+        # denom = 1/A.mass + 1/B.mass + foo/A.momentOfInertia + fee/B.momentOfInertia
+        # j = numer / denom
+        print("B.v was", B.v, "now it's ", end="")
+        B.v += j * n / B.mass
+        print(B.v)
+
 
 def getSysKE(A, B):
     return 0.5 * (A.mass * np.linalg.norm(A.v)**2) + 0.5 * (B.mass * np.linalg.norm(B.v)**2)
