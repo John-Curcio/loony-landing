@@ -11,8 +11,10 @@ else:
 
 
 class Flyer(object):
-    # Flyer is a class that captures all the general, foundational information
-    # required to do calculations involving rigid bodies. 
+    # Flyer is a class that captures all the fundamental information
+    # required to do calculations involving rigid bodies. Because it makes 
+    # modeling much easier, Flyers must be convex polygons or circles (maybe 
+    # we'll extend this to ellipses).
     
     # A rigid body models a physical object with size, shape, and mass, that 
     # doesn't bend or break. It's a good approximation of, say, a wrench, and a
@@ -20,7 +22,7 @@ class Flyer(object):
     # mass and position and velocity and nothing else), since it has size and 
     # shape, it can rotate and collide at angles.
     
-    # tbh idk why i named it "Flyer." Maybe it sounds friendlier than RB?
+    # tbh im not sure why i named it "Flyer." Maybe it sounds friendlier than RB?
     def __init__(self, x, y, mass, vertices=None): 
         self.pos = np.array([x, y])
         self.mass = mass
@@ -55,10 +57,13 @@ class Flyer(object):
             momentAboutX = foo * (a[1]**2 + a[1] * b[1] + b[1]**2)
             momentAboutY = foo * (a[0]**2 + a[0] * b[0] + b[0]**2)
             return momentAboutX + momentAboutY
-
+        self.sortVertices()
         for i in range(len(self.vertices)):
             j += segmentMoment(self.vertices[i - 1] - self.pos, self.vertices[i] - self.pos)
         return abs(j)
+
+    def sortVertices(self):
+        self.vertices.sort(key=lambda vert: getAngle(vert, self.pos))
 
     def getEdges(self): 
         #TODO: THIS ASSUMES VERTICES ARE ALREADY SORTED C-WISE OR CC-WISE! 
@@ -67,6 +72,7 @@ class Flyer(object):
         # getAngle = lambda center, point: math.atan((point[1] - center[1]) / (point[0] - center[0])) 
         # self.vertices.sort(key=getAngle)
         edges = [] 
+        self.sortVertices()
         for i in range(len(self.vertices)):
             edges.append([self.vertices[i - 1], self.vertices[i]])
         return edges
