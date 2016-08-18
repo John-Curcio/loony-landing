@@ -242,6 +242,8 @@ def testCollide(A, B, deltaTime):
     intersects = getIntersects(A, B, 0)
     # applying collision to A
     if intersects != None:
+        # j is impulse
+        
         n = getNorm(intersects, A)
         poc = [(intersects[0][i] + intersects[1][i]) / 2 for i in range(len(intersects))] #tuple comprehension?
         e = getRestitutionCoefficient(A, B)
