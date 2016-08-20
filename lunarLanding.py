@@ -57,12 +57,14 @@ def main():
     mainloop = True
 
     # sideLen = 25
-    # vertices = [[width/2 + sideLen/2, height/2 + sideLen/2],
+    # vertices = [
+    #         [width/2 + 3 * sideLen, height/2 + 3 * sideLen],
     #         [width/2 - sideLen/2, height/2 + sideLen/2],
     #         [width/2 - sideLen/2, height/2 - sideLen/2],
+    #         [width/2 + sideLen/2, height/2 + sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 50, 3)
+    vertices = getVertices(width/2, height/2, 50, 7)
     Player = f.TestPlayer(width/2, height/2, 1, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
