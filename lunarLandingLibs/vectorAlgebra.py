@@ -11,10 +11,7 @@ def dot(A,B):
 #returns a list B where every index of a 
 #list A multiplied by a constant c
 def scal_prod(c,A):
-    B = []
-    for x in A:
-        B += [c * x]
-    return B
+    return [c * A[i] for i in range(len(A))]
 
 
 #returns the magnitude of a vector A

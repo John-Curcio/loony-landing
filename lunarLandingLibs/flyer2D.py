@@ -24,11 +24,11 @@ class Flyer(object):
     
     # tbh im not sure why i named it "Flyer." Maybe it sounds friendlier than RB?
     def __init__(self, x, y, mass, vertices=None): 
-        self.pos = np.array([x, y])
+        self.pos = np.array([x, y], dtype=np.float64)
         self.mass = mass
         self.angle = 0
         self.angularV = 0        
-        self.v = np.array([0, 0])
+        self.v = np.array([0, 0], dtype=np.float64)
 
         if vertices == None: 
             self.vertices = None
@@ -37,9 +37,11 @@ class Flyer(object):
             self.vertices = [None] * len(vertices)
             self.r = 0
             for i in range(0, len(vertices)):
-                self.vertices[i] = np.array(vertices[i])
+                self.vertices[i] = np.array(vertices[i]) #TODO: shouldn't have to worry about floating point precision here, right? i mean it's important in calculating intersections
                 self.r = max(np.linalg.norm(self.pos - self.vertices[i]), self.r)
         self.momentOfInertia = self.getMomentOfInertia()
+        print(self.mass, self.momentOfInertia)
+        self.restitutionRoot = 1
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
         self.Surface.convert_alpha()
         self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
@@ -50,17 +52,16 @@ class Flyer(object):
 
     def getMomentOfInertia(self):
         if self.vertices == None: 
-            return math.pi * (self.r**4) / 2  
+            return self.mass * (self.r**2) / 2  
         j = 0
-        def segmentMoment(a, b):
-            foo = (a[0] * b[1] - a[1] * b[0]) / 12
-            momentAboutX = foo * (a[1]**2 + a[1] * b[1] + b[1]**2)
-            momentAboutY = foo * (a[0]**2 + a[0] * b[0] + b[0]**2)
-            return momentAboutX + momentAboutY
-        self.sortVertices()
+        area = 0
         for i in range(len(self.vertices)):
-            j += segmentMoment(self.vertices[i - 1] - self.pos, self.vertices[i] - self.pos)
-        return abs(j)
+            vertA, vertB = self.vertices[i - 1] - self.pos, self.vertices[i] - self.pos
+            foo = abs(np.cross(vertA, vertB))
+            fee = np.dot(vertA, vertA) + np.dot(vertA, vertB) + np.dot(vertB, vertB)
+            j += (foo * fee)
+            area += foo
+        return abs((self.mass / 6) * j / area)
 
     def sortVertices(self):
         self.vertices.sort(key=lambda vert: getAngle(vert, self.pos))
@@ -95,13 +96,14 @@ class Flyer(object):
             pygame.draw.polygon(background,self.color, getIntPointList(self.vertices))
 
     def move(self, deltaTime):
-        for i in range(len(self.vertices)): 
-        # ^ iterating this way is bad style but aliasing necessitates it.
-            vert = self.vertices[i]
-            currTheta = getAngle(vert, self.pos) + self.angularV * deltaTime
-            vert = self.pos + np.linalg.norm(vert - self.pos) * np.array([math.cos(currTheta), math.sin(currTheta)])
-            vert += self.v * deltaTime
-            self.vertices[i] = vert # again, bad style. 
+        if self.vertices != None: #if it's a polygon, have to move vertices along too. 
+            for i in range(len(self.vertices)): 
+            # ^ iterating this way is bad style but aliasing necessitates it.
+                vert = self.vertices[i]
+                currTheta = getAngle(vert, self.pos) + self.angularV * deltaTime
+                vert = self.pos + np.linalg.norm(vert - self.pos) * np.array([math.cos(currTheta), math.sin(currTheta)]) #float64 shouldn't be necessary here...
+                vert += self.v * deltaTime
+                self.vertices[i] = vert # again, bad style. 
         self.pos += self.v * deltaTime
 
 class SpaceshipComponent(Flyer): 
@@ -209,11 +211,11 @@ def getIntersects(A, B, deltaTime):
 
 def getNorm(intersects, facing):
     tangent = [intersects[1][i] - intersects[0][i] for i in range(len(intersects))]
-    n = np.array([tangent[1], -tangent[0]])
+    n = np.array([tangent[1], -tangent[0]], dtype=np.float64)
     
     mid = [(intersects[0][i] + intersects[1][i])/2 for i in range(len(intersects))]
     n = va.proj(facing.pos - mid, n)
-    n /= va.dot(n, n)
+    n /= va.dot(n, n)**0.5
 
     return n
 
@@ -242,38 +244,49 @@ def genCollide(A, B, deltaTime):
     #now apply to B
 
 def getRestitutionCoefficient(A, B):
-    return 1
+    return A.restitutionRoot * B.restitutionRoot
 
 def testCollide(A, B, deltaTime):
     intersects = getIntersects(A, B, 0)
     # applying collision to A
     if intersects != None:
-        # j is impulse
+        n = getNorm(intersects, A) #normal vector. By convention it points towards A.
+
+        e = getRestitutionCoefficient(A, B) 
+        # ^ coefficient of restitution. ratio of relative speeds after and before a collision - real number btw 0 and 1.
+        poc = [(intersects[0][i] + intersects[1][i]) / 2 for i in range(len(intersects))] 
+        poc = np.array(poc, dtype=np.float64) #poc is a rough approximation of the bodies' point of contact
+
+        rA = poc - A.pos # vector from A's center of mass to point of contact. Often denoted r in physics so i'll follow that convention.
+        rB = poc - B.pos
+        rAPerp = np.array([-1 * rA[1], rA[0]], np.float64) # rAPerp always be perpendicular to rA. Also rBPerp to rB
+        rBPerp = np.array([-1 * rB[1], rB[0]], np.float64) # rAPerp is the derivative of rA, divided by A.angularV
         
-        n = getNorm(intersects, A)
-        poc = [(intersects[0][i] + intersects[1][i]) / 2 for i in range(len(intersects))] #tuple comprehension?
-        e = getRestitutionCoefficient(A, B)
-        numer = -1 * (1 + e) * va.dot(A.v, n)
-        rap = [(poc - A.pos)[0], (poc - A.pos)[1], 0]
-        rbp = [(poc - B.pos)[0], (poc - B.pos)[1], 0]
-        N = np.array([n[0], n[1], 0])
-        rapxn = va.cross(rap, N) #horrible style but tears in a bucket
-        rbpxn = va.cross(rbp, N)
-        foo = va.dot(rapxn, rapxn)
-        fee = va.dot(rbpxn, rbpxn)
-        denom = 1/A.mass + 1/B.mass + foo/A.momentOfInertia + fee/B.momentOfInertia
-        j = numer / denom
-        print("j is", j)
-        print("A.v was", A.v, "now it's ", end="")
-        A.v += j * n / A.mass
+        leverArmA = np.cross(rA, n) # if len(a) == len(b) == 2, then np.cross(a, b) 
+        leverArmB = np.cross(rB, n) # treats a[2] and b[2] as 0 and returns the z-component of the result. 
+                                    # so np.cross([a[0], a[1], 0], [b[0], b[1], 0])[2] == np.cross(a, b)
+        vAatContact = A.v + A.angularV * rAPerp
+        vBatContact = B.v + B.angularV * rBPerp
+
+        numer = (-1 - e) * np.dot((vAatContact - vBatContact), n)
+        denom = (1 / A.mass) + np.dot(rAPerp, n) * np.cross(rAPerp, n) / A.momentOfInertia
+        denom += (1 / B.mass) + np.dot(rBPerp, n) * np.cross(rBPerp, n) / B.momentOfInertia
+
+
+        j = abs(numer / denom)
+        print(numer, denom, j)
+        
+        # remember, n points towards A by convention.
+        print("A.v was", A.v, "now it's", end="")
+        A.v += (j / A.mass) * n
+        A.angularV += j * leverArmA / A.momentOfInertia
         print(A.v)
-        #and I'm completely skipping rotations from collisions until I figure that out
-        n *= -1
-        # denom = 1/A.mass + 1/B.mass + foo/A.momentOfInertia + fee/B.momentOfInertia
-        # j = numer / denom
+
         print("B.v was", B.v, "now it's ", end="")
-        B.v += j * n / B.mass
+        B.v -= (j / B.mass) * n
+        B.angularV -= j * leverArmB / B.momentOfInertia
         print(B.v)
+    return intersects
 
 
 def getSysKE(A, B):
