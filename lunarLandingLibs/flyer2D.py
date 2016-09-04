@@ -41,7 +41,7 @@ class Flyer(object):
                 self.r = max(np.linalg.norm(self.pos - self.vertices[i]), self.r)
         self.momentOfInertia = self.getMomentOfInertia()
         print(self.mass, self.momentOfInertia)
-        self.restitutionRoot = 1
+        self.restitutionRoot = 0.6
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
         self.Surface.convert_alpha()
         self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
@@ -154,17 +154,23 @@ def boundsIntersect(A, B):
     #TODO: use pygame bounding boxes for sake of speed
     return np.linalg.norm(A.pos - B.pos) < A.r + B.r #yes, strictly less than
 
-def getYIntercept(edge):
-    return edge[0][1] - getSlope(edge) * edge[0][0]
+def getYIntercept(edge): 
+    slope = getSlope(edge)
+    if slope == None: 
+        return None 
+    else:
+        return edge[0][1] - getSlope(edge) * edge[0][0]
 
 def getSlope(edge):
-    if edge[1][0] == edge[0][0]: return None
-    else: return (edge[1][1] - edge[0][1]) / (edge[1][0] - edge[0][0])
+    if edge[1][0] == edge[0][0]: 
+        return None
+    else: 
+        return (edge[1][1] - edge[0][1]) / (edge[1][0] - edge[0][0])
 
-def getEdgeIntersect(a, b):
+def getEdgeIntersect(a, b): 
     #edge is represented as a 2-length list of [x, y] coordinates
     slopeA, slopeB = getSlope(a), getSlope(b)
-    if slopeA == slopeB:
+    if slopeA == slopeB == None: #ie edges are parallel. If the edges are actually the same, then we do not consider that a case of intersection.
         return None
     elif None in (slopeA, slopeB): 
         if slopeA == None:
@@ -176,6 +182,8 @@ def getEdgeIntersect(a, b):
         x = verticalEdge[0][0]
         assert(x == verticalEdge[1][0])
         y = realSlope * x + getYIntercept(realEdge)
+    elif almostEqual(slopeA, slopeB, 10**-5):
+        return None
     else:
         x = (getYIntercept(b) - getYIntercept(a)) / (slopeA - slopeB)
         y = slopeA * x + getYIntercept(a)

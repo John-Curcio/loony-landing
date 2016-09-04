@@ -64,7 +64,7 @@ def main():
     #         [width/2 + sideLen/2, height/2 + sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 5, 40)
+    vertices = getVertices(width/2, height/2, 40, 3)
     Player = f.TestPlayer(width/2, height/2, 4, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
@@ -112,11 +112,6 @@ def main():
             Player.angularV += math.pi / 100
         elif pressed[pygame.K_c]:
             Player.angularV -= math.pi / 100
-        if pressed[pygame.K_a]:
-            print("Player.angularV is", Player.angularV)
-            print("Player.pos is", Player.pos)
-            print("Vertices:", Player.vertices)
-            print("\n")
         if pressed[pygame.K_b]:
             Player.v *= 0
             Player.angularV = 0
@@ -139,8 +134,8 @@ def main():
         screen.blit(background, (0, 0)) 
         Player.draw(screen)
         Collider.draw(screen)
-        # drawEdges(Collider, screen)
-        # drawEdges(Player, screen)
+        #drawEdges(Collider, screen) 
+        #drawEdges(Player, screen) 
         if tangent != None:
             pygame.draw.line(screen, (255, 0, 0), tangent[0], tangent[1], 2)
             n = f.getNorm(tangent, Player)
