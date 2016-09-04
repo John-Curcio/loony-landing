@@ -50,7 +50,7 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 10 #desired frame rate in frames per second.
+    FPS = 20 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
@@ -64,12 +64,12 @@ def main():
     #         [width/2 + sideLen/2, height/2 + sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 50, 7)
-    Player = f.TestPlayer(width/2, height/2, 1, vertices)
+    vertices = getVertices(width/2, height/2, 5, 40)
+    Player = f.TestPlayer(width/2, height/2, 4, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
-    vertices = getVertices(width/3, height/3, 50, 4)
-    Collider = f.Flyer(width/3, height/3, 5, vertices)
+    vertices = getVertices(width/3, height/3, 50, 3)
+    Collider = f.Flyer(width/3, height/3, 4, vertices)
     Collider.Surface.set_colorkey((0, 0, 0))
     Collider.Surface = Collider.Surface.convert_alpha()
 
@@ -79,7 +79,13 @@ def main():
                     pygame.K_UP:[0,-1], 
                     pygame.K_LEFT:[-1,0], 
                     pygame.K_RIGHT:[1,0]}
-    print(Player.vertices)
+
+    wasdToDirs = {pygame.K_s:arrowsToDirs[pygame.K_DOWN],
+                    pygame.K_w: arrowsToDirs[pygame.K_UP],
+                    pygame.K_a: arrowsToDirs[pygame.K_LEFT],
+                    pygame.K_d: arrowsToDirs[pygame.K_RIGHT]}
+
+    print(Player.momentOfInertia, Collider.momentOfInertia)
     while mainloop:
 
         milliseconds = clock.tick(FPS)
@@ -95,20 +101,25 @@ def main():
         if pressed[pygame.K_ESCAPE]: mainloop = False #TODO: how to check if user clicks on window X?
         for arrow in arrowsToDirs.keys():
             if pressed[arrow]:
-                force = [ arrowsToDirs[arrow][i] * 100 for i in range(2)]
+                force = [ arrowsToDirs[arrow][i] * 1000 for i in range(2)]
                 Player.applyForce(force, deltaTime)
-            if pressed[pygame.K_w]: # need a method for applying torque? 
-                Player.angularV += math.pi / 100
-            elif pressed[pygame.K_s]:
-                Player.angularV -= math.pi / 100
-            if pressed[pygame.K_a]:
-                print("Player.angularV is", Player.angularV)
-                print("Player.pos is", Player.pos)
-                print("Vertices:", Player.vertices)
-                print("\n")
-            if pressed[pygame.K_b]:
-                Player.v *= 0
-                Player.angularV = 0
+        for arrow in wasdToDirs.keys():
+            if pressed[arrow]:
+                force = [wasdToDirs[arrow][i] * 1000 for i in range(2)]
+                Collider.applyForce(force, deltaTime)
+
+        if pressed[pygame.K_z]: # need a method for applying torque...how do legit spaceships do it?
+            Player.angularV += math.pi / 100
+        elif pressed[pygame.K_c]:
+            Player.angularV -= math.pi / 100
+        if pressed[pygame.K_a]:
+            print("Player.angularV is", Player.angularV)
+            print("Player.pos is", Player.pos)
+            print("Vertices:", Player.vertices)
+            print("\n")
+        if pressed[pygame.K_b]:
+            Player.v *= 0
+            Player.angularV = 0
             # when i want my ship to rotate, can i use a reaction chain (?) or do i need to use thrusters?
         
         #collisions
@@ -123,7 +134,7 @@ def main():
 
 
         Player.move(deltaTime)
-        # Collider.move(deltaTime)
+        Collider.move(deltaTime)
 
         screen.blit(background, (0, 0)) 
         Player.draw(screen)
@@ -132,6 +143,9 @@ def main():
         # drawEdges(Player, screen)
         if tangent != None:
             pygame.draw.line(screen, (255, 0, 0), tangent[0], tangent[1], 2)
+            n = f.getNorm(tangent, Player)
+            mid = [(tangent[0][i] + tangent[1][i]) / 2 for i in range(2)]
+            pygame.draw.line(screen, (0, 255, 0), mid, [mid[i] + n[i] for i in range(2)], 3)
         #TODO: wtf is get_rect?
         pygame.display.set_caption("Frame rate: {:0.2f} frames per second." 
                                    " Playtime: {:.2} seconds".format(
