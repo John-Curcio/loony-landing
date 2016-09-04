@@ -17,7 +17,7 @@ pygame.init()
 ################################################################################
 #set up the window
 
-size = width, height = 700, 700
+size = width, height = 1000, 1000
 screen = pygame.display.set_mode(size) #set size of game window
 background = pygame.Surface(screen.get_size()) #create empty surface
 background.fill((0, 100, 230)) #fill surface with some color
@@ -50,7 +50,7 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 20 #desired frame rate in frames per second.
+    FPS = 15 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
@@ -64,16 +64,22 @@ def main():
     #         [width/2 + sideLen/2, height/2 + sideLen/2],
     #         [width/2 + sideLen/2, height/2 - sideLen/2]]
 
-    vertices = getVertices(width/2, height/2, 40, 3)
+    vertices = getVertices(width/2, height/2, 80, 3)
     Player = f.TestPlayer(width/2, height/2, 4, vertices)
     #Player = f.TestPlayer(width/2, height/2, 1, None)
 
-    vertices = getVertices(width/3, height/3, 50, 3)
+    vertices = getVertices(width/3, height/3, 100, 3)
     Collider = f.Flyer(width/3, height/3, 4, vertices)
     Collider.Surface.set_colorkey((0, 0, 0))
     Collider.Surface = Collider.Surface.convert_alpha()
 
-    bodiesOnScreen = {Player, Collider}
+    vertices = getVertices(2 * width/3, 2 * height/3, 50, 4)
+    Ass = f.Flyer(2 * width/3, 2 * height/3, 4, vertices)
+
+    vertices = getVertices(2 * width/3, height/3, 50, 5)
+    Butt = f.Flyer(2 * width/3, height/3, 4, vertices)
+
+    bodiesOnScreen = {Player, Collider, Ass, Butt}
 
     arrowsToDirs = {pygame.K_DOWN:[0,1], 
                     pygame.K_UP:[0,-1], 
@@ -85,7 +91,7 @@ def main():
                     pygame.K_a: arrowsToDirs[pygame.K_LEFT],
                     pygame.K_d: arrowsToDirs[pygame.K_RIGHT]}
 
-    print(Player.momentOfInertia, Collider.momentOfInertia)
+    #print(Player.momentOfInertia, Collider.momentOfInertia)
     while mainloop:
 
         milliseconds = clock.tick(FPS)
@@ -128,12 +134,11 @@ def main():
                 tangent = f.testCollide(A, B, deltaTime)
 
 
-        Player.move(deltaTime)
-        Collider.move(deltaTime)
-
         screen.blit(background, (0, 0)) 
-        Player.draw(screen)
-        Collider.draw(screen)
+        for Body in bodiesOnScreen:
+            Body.move(deltaTime)        
+            Body.draw(screen)
+
         #drawEdges(Collider, screen) 
         #drawEdges(Player, screen) 
         if tangent != None:

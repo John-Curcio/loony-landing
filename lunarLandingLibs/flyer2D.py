@@ -263,22 +263,26 @@ def testCollide(A, B, deltaTime):
         e = getRestitutionCoefficient(A, B) 
         # ^ coefficient of restitution. ratio of relative speeds after and before a collision - real number btw 0 and 1.
         poc = [(intersects[0][i] + intersects[1][i]) / 2 for i in range(len(intersects))] 
-        poc = np.array(poc, dtype=np.float64) #poc is a rough approximation of the bodies' point of contact
+        poc = np.array(poc, dtype=np.float64) 
+        #poc is a rough approximation of the bodies' point of contact. 
+        #simply the midpoint between the intersects.
 
-        rA = poc - A.pos # vector from A's center of mass to point of contact. Often denoted r in physics so i'll follow that convention.
-        rB = poc - B.pos
+        rA = poc - A.pos # vector from A's center of mass to point of contact.
+        rB = poc - B.pos # Often denoted r in physics so i'll follow that convention.
         rAPerp = np.array([-1 * rA[1], rA[0]], np.float64) # rAPerp always be perpendicular to rA. Also rBPerp to rB
         rBPerp = np.array([-1 * rB[1], rB[0]], np.float64) # rAPerp is the derivative of rA, divided by A.angularV
         
-        leverArmA = np.cross(rA, n) # if len(a) == len(b) == 2, then np.cross(a, b) 
-        leverArmB = np.cross(rB, n) # treats a[2] and b[2] as 0 and returns the z-component of the result. 
-                                    # so np.cross([a[0], a[1], 0], [b[0], b[1], 0])[2] == np.cross(a, b)
+        leverArmA = np.cross(rA, n)  
+        leverArmB = np.cross(rB, n) 
+        # if len(a) == len(b) == 2, then np.cross(a, b) will treat a[2] and b[2] 
+        # as 0 and returns the z-component of the result. 
+        # so np.cross([a[0], a[1], 0], [b[0], b[1], 0])[2] == np.cross(a, b)
         vAatContact = A.v + A.angularV * rAPerp
         vBatContact = B.v + B.angularV * rBPerp
 
         numer = (-1 - e) * np.dot((vAatContact - vBatContact), n)
-        denom = (1 / A.mass) + np.dot(rAPerp, n) * np.cross(rAPerp, n) / A.momentOfInertia
-        denom += (1 / B.mass) + np.dot(rBPerp, n) * np.cross(rBPerp, n) / B.momentOfInertia
+        denom = (1 / A.mass) + np.dot(rAPerp, n) * np.cross(rA, n) / A.momentOfInertia
+        denom += (1 / B.mass) + np.dot(rBPerp, n) * np.cross(rB, n) / B.momentOfInertia
 
 
         j = abs(numer / denom)
