@@ -162,7 +162,7 @@ def getYIntercept(edge):
         return edge[0][1] - getSlope(edge) * edge[0][0]
 
 def getSlope(edge):
-    if edge[1][0] == edge[0][0]: 
+    if almostEqual(edge[1][0], edge[0][0], 10**-5): 
         return None
     else: 
         return (edge[1][1] - edge[0][1]) / (edge[1][0] - edge[0][0])
@@ -170,7 +170,9 @@ def getSlope(edge):
 def getEdgeIntersect(a, b): 
     #edge is represented as a 2-length list of [x, y] coordinates
     slopeA, slopeB = getSlope(a), getSlope(b)
-    if slopeA == slopeB == None: #ie edges are parallel. If the edges are actually the same, then we do not consider that a case of intersection.
+    if slopeA == slopeB == None: 
+        # implies edges are parallel. If the edges are actually the same, then
+        # we do not consider that a case of intersection.
         return None
     elif None in (slopeA, slopeB): 
         if slopeA == None:
@@ -179,10 +181,11 @@ def getEdgeIntersect(a, b):
         else: 
             verticalEdge, realEdge = b, a
             verticalSlope, realSlope = slopeB, slopeA
-        x = verticalEdge[0][0]
-        assert(x == verticalEdge[1][0])
+        x = verticalEdge[0][0] # could just as easily be verticalEdge[1][0]
         y = realSlope * x + getYIntercept(realEdge)
     elif almostEqual(slopeA, slopeB, 10**-5):
+        # i.e. edges are parallel. If the edges are actually the same, then we 
+        # do not consider that a case of intersection.
         return None
     else:
         x = (getYIntercept(b) - getYIntercept(a)) / (slopeA - slopeB)
@@ -202,8 +205,6 @@ def rewindPosAndAng(A, deltaTime):
     A.angle += A.angularV * deltaTime
 
 def getIntersects(A, B, deltaTime): 
-    #TODO: think this is going to be troublesome with numpy's precision. Bug waiting to occur
-
     rewindPosAndAng(A, deltaTime)
     rewindPosAndAng(B, deltaTime) #DO NOT UNDO THIS BEFORE RETURNING. 
     #TODO: this isn't very clear, but i think this saves a lil time... refactor getNorm and getIntersects for clarity
@@ -222,7 +223,9 @@ def getNorm(intersects, facing):
     n = np.array([tangent[1], -tangent[0]], dtype=np.float64)
     
     mid = [(intersects[0][i] + intersects[1][i])/2 for i in range(len(intersects))]
-    n = va.proj(facing.pos - mid, n)
+
+
+    n = va.proj(facing.pos - mid, n) #TODO: this is deprecated. Div by zero error?
     n /= va.dot(n, n)**0.5
 
     return n

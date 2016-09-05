@@ -50,7 +50,7 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 15 #desired frame rate in frames per second.
+    FPS = 25 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
@@ -133,12 +133,12 @@ def main():
                 # f.genCollide(A, B, deltaTime)
                 tangent = f.testCollide(A, B, deltaTime)
 
-
         screen.blit(background, (0, 0)) 
         for Body in bodiesOnScreen:
             Body.move(deltaTime)        
             Body.draw(screen)
-
+            #drawEdges(Body, screen)
+        
         #drawEdges(Collider, screen) 
         #drawEdges(Player, screen) 
         if tangent != None:
