@@ -47,4 +47,4 @@ Temporary Items
 .apdisk
 
 # Compiled Scripts, generated at runtime
-.pyc
+lunarLandingLibs/__pycache__/
