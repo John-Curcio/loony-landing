@@ -3,12 +3,15 @@ import pygame
 import math
 
 import os
-if os.getcwd() == 'C:\\Users\\Nardo\\Documents\\GitHub\\loony-landing\\lunarLandingLibs':
+if os.getcwd() == 'C:\\Users\\Nardo\\Documents\\GitHub\\loony-landing\\lunarLandingLibs': 
     import vectorAlgebra as va
 else:
     import lunarLandingLibs.vectorAlgebra as va 
     # ^ this feels very hack-y and unprofessional but it gets the job done.
+    # oh yeah, and it means it won't work on another person's machine. nice.
 
+
+bigG = 0.05
 
 class Flyer(object):
     # Flyer is a class that captures all the fundamental information
@@ -23,7 +26,7 @@ class Flyer(object):
     # shape, it can rotate and collide at angles.
     
     # tbh im not sure why i named it "Flyer." Maybe it sounds friendlier than RB?
-    def __init__(self, x, y, mass, vertices=None): 
+    def __init__(self, x, y, mass, vertices=None, **kwargs): 
         self.pos = np.array([x, y], dtype=np.float64)
         self.mass = mass
         self.angle = 0
@@ -41,7 +44,7 @@ class Flyer(object):
                 self.r = max(np.linalg.norm(self.pos - self.vertices[i]), self.r)
         self.momentOfInertia = self.getMomentOfInertia()
         print(self.mass, self.momentOfInertia)
-        self.restitutionRoot = 0.6
+        self.restitutionRoot = 1
         self.Surface = pygame.Surface((2 * self.r, 2 * self.r))
         self.Surface.convert_alpha()
         self.Surface.set_colorkey((0, 0, 0)) #black is transparent.
@@ -319,3 +322,18 @@ def getAngle(point, origin):
     adj = point[0] - origin[0]
     return math.atan2(opp, adj)
     
+def getArea(vertices, pos):
+    area = 0
+    pos = np.array(pos)
+    for i in range(len(vertices)):
+        vertA, vertB = vertices[i - 1] - pos, vertices[i] - pos
+        foo = abs(np.cross(vertA, vertB))
+        area += foo
+    return area
+
+def gravAttract(A, B, deltaTime):
+    r = B.pos - A.pos
+    forceMag = bigG * A.mass * B.mass / np.dot(r, r)
+    forceDir = r / np.linalg.norm(r)
+    A.v += (forceMag / A.mass) * forceDir 
+    B.v -= (forceMag / B.mass) * forceDir

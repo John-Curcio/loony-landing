@@ -50,34 +50,27 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 25 #desired frame rate in frames per second.
+    FPS = 20 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
     mainloop = True
+    density = 10
 
-    # sideLen = 25
-    # vertices = [
-    #         [width/2 + 3 * sideLen, height/2 + 3 * sideLen],
-    #         [width/2 - sideLen/2, height/2 + sideLen/2],
-    #         [width/2 - sideLen/2, height/2 - sideLen/2],
-    #         [width/2 + sideLen/2, height/2 + sideLen/2],
-    #         [width/2 + sideLen/2, height/2 - sideLen/2]]
+    vertices = getVertices(width/2, height/2, 20, 3)
+    Player = f.TestPlayer(width/2, height/2, f.getArea(vertices, (width/2, height/2)) * density, vertices)
+    # Player = f.TestPlayer(width/2, height/2, 99999, vertices)
 
-    vertices = getVertices(width/2, height/2, 80, 3)
-    Player = f.TestPlayer(width/2, height/2, 4, vertices)
-    #Player = f.TestPlayer(width/2, height/2, 1, None)
-
-    vertices = getVertices(width/3, height/3, 100, 3)
-    Collider = f.Flyer(width/3, height/3, 4, vertices)
+    vertices = getVertices(width/5, height/5, 100, 30)
+    Collider = f.Flyer(width/5, height/5, f.getArea(vertices, (width/5, height/5)) * density, vertices)
     Collider.Surface.set_colorkey((0, 0, 0))
     Collider.Surface = Collider.Surface.convert_alpha()
 
-    vertices = getVertices(2 * width/3, 2 * height/3, 50, 4)
-    Ass = f.Flyer(2 * width/3, 2 * height/3, 4, vertices)
+    vertices = getVertices(2 * width/3, 2 * height/3, 40, 4)
+    Ass = f.Flyer(2 * width/3, 2 * height/3, f.getArea(vertices, (2 * width/3, 2 * height/3)) * density, vertices)
 
-    vertices = getVertices(2 * width/3, height/3, 50, 5)
-    Butt = f.Flyer(2 * width/3, height/3, 4, vertices)
+    vertices = getVertices(2 * width/3, height/3, 10, 15)
+    Butt = f.Flyer(2 * width/3, height/3, f.getArea(vertices, (2* width/3, height/3)) * density, vertices)
 
     bodiesOnScreen = {Player, Collider, Ass, Butt}
 
@@ -107,7 +100,7 @@ def main():
         if pressed[pygame.K_ESCAPE]: mainloop = False #TODO: how to check if user clicks on window X?
         for arrow in arrowsToDirs.keys():
             if pressed[arrow]:
-                force = [ arrowsToDirs[arrow][i] * 1000 for i in range(2)]
+                force = [ arrowsToDirs[arrow][i] * Player.mass * 100 for i in range(2)]
                 Player.applyForce(force, deltaTime)
         for arrow in wasdToDirs.keys():
             if pressed[arrow]:
@@ -115,9 +108,9 @@ def main():
                 Collider.applyForce(force, deltaTime)
 
         if pressed[pygame.K_z]: # need a method for applying torque...how do legit spaceships do it?
-            Player.angularV += math.pi / 100
+            Player.angularV += math.pi / 10
         elif pressed[pygame.K_c]:
-            Player.angularV -= math.pi / 100
+            Player.angularV -= math.pi / 10
         if pressed[pygame.K_b]:
             Player.v *= 0
             Player.angularV = 0
@@ -131,7 +124,9 @@ def main():
             for B in bodiesOnScreen.difference(seen):
                 # f.puckCollide(A, B, deltaTime)
                 # f.genCollide(A, B, deltaTime)
-                tangent = f.testCollide(A, B, deltaTime)
+                f.testCollide(A, B, deltaTime)
+                f.gravAttract(A, B, deltaTime)
+
 
         screen.blit(background, (0, 0)) 
         for Body in bodiesOnScreen:
@@ -153,6 +148,3 @@ def main():
         pygame.display.flip()
     pygame.quit()
 main()
-
-# Vertices: [array([ 400.,  350.]), array([ 365.45084972,  397.55282581]), array([ 309.54915028,  379.38926261]), array([ 309.54915028,  320.61073739]), array([ 365.45084972,  302.44717419])]
-# Vertices: [array([ 400.,  350.]), array([ 365.45084972,  397.55282581]), array([ 390.45084972,  379.38926261]), array([ 390.45084972,  320.61073739]), array([ 365.45084972,  302.44717419])]
