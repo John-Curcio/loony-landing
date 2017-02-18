@@ -50,7 +50,7 @@ def drawEdges(A, screen):
 
 def main():
     
-    FPS = 20 #desired frame rate in frames per second.
+    FPS = 30 #desired frame rate in frames per second.
     clock = pygame.time.Clock() #create a pygame clock object
     playtime = 0.0 #milliseconds elapsed since start of game.
     
@@ -61,16 +61,16 @@ def main():
     #You can steer a triangle (pretend it's a spaceship) and bump around!
     vertices = getVertices(width/2, height/2, 20, 3)
     Player = f.TestPlayer(width/2, height/2, f.getArea(vertices, (width/2, height/2)) * density, vertices)
-    vertices = getVertices(width/5, height/5, 100, 30)
-    ThirtyGon = f.Flyer(width/5, height/5, f.getArea(vertices, (width/5, height/5)) * density, vertices)
-    ThirtyGon.Surface.set_colorkey((0, 0, 0))
-    ThirtyGon.Surface = ThirtyGon.Surface.convert_alpha()
+    vertices = getVertices(width/5, height/5, 100, 15)
+    FifteenGon = f.Flyer(width/5, height/5, f.getArea(vertices, (width/5, height/5)) * density, vertices)
+    FifteenGon.Surface.set_colorkey((0, 0, 0))
+    FifteenGon.Surface = FifteenGon.Surface.convert_alpha()
     vertices = getVertices(2 * width/3, 2 * height/3, 40, 4)
     Square = f.Flyer(2 * width/3, 2 * height/3, f.getArea(vertices, (2 * width/3, 2 * height/3)) * density, vertices)
-    vertices = getVertices(2 * width/3, height/3, 10, 15)
-    FifteenGon = f.Flyer(2 * width/3, height/3, f.getArea(vertices, (2* width/3, height/3)) * density, vertices)
+    vertices = getVertices(2 * width/3, height/3, 10, 5)
+    Pentagon = f.Flyer(2 * width/3, height/3, f.getArea(vertices, (2* width/3, height/3)) * density, vertices)
 
-    bodiesOnScreen = {Player, ThirtyGon, Square, FifteenGon}
+    bodiesOnScreen = {Player, FifteenGon, Square, Pentagon}
 
     arrowsToDirs = {pygame.K_DOWN:[0,1], 
                     pygame.K_UP:[0,-1], 
@@ -82,7 +82,7 @@ def main():
                     pygame.K_a: arrowsToDirs[pygame.K_LEFT],
                     pygame.K_d: arrowsToDirs[pygame.K_RIGHT]}
 
-    #print(Player.momentOfInertia, ThirtyGon.momentOfInertia)
+    #print(Player.momentOfInertia, FifteenGon.momentOfInertia)
     while mainloop:
 
         milliseconds = clock.tick(FPS)
@@ -103,7 +103,7 @@ def main():
         for arrow in wasdToDirs.keys():
             if pressed[arrow]:
                 force = [wasdToDirs[arrow][i] * 1000 for i in range(2)]
-                ThirtyGon.applyForce(force, deltaTime)
+                FifteenGon.applyForce(force, deltaTime)
 
         if pressed[pygame.K_z]: # need a method for applying torque...how do legit spaceships do it?
             Player.angularV += math.pi / 10
@@ -132,7 +132,7 @@ def main():
             Body.draw(screen)
             #drawEdges(Body, screen)
         
-        #drawEdges(ThirtyGon, screen) 
+        #drawEdges(FifteenGon, screen) 
         #drawEdges(Player, screen) 
         if tangent != None:
             pygame.draw.line(screen, (255, 0, 0), tangent[0], tangent[1], 2)
